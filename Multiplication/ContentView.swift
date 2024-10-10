@@ -22,47 +22,76 @@ struct ContentView: View {
     @State private var answer = Int()
     @State private var score = 0
     @State private var startButtonActive = false
-    @State private var bum = ""
     @State var name = ""
     @FocusState private var isFocused: Bool
+    @State private var navActive = true
+    
+    @State private var errorTitle = ""
+    @State private var errorMessage = ""
+    @State private var showingError = false
     
     var body: some View {
-        
-        NavigationView {
-            VStack {
-                Text("Enter your name below:")
-                TextField("name...", text: $bum)
-                NavigationLink(destination: GameView(questions: questions)) {
-                    Text("Start Game")
-                }.simultaneousGesture(TapGesture().onEnded{startGame()})
-                
-                
+        ZStack {
+            LinearGradient(colors: [.yellow, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
+                .ignoresSafeArea()
+            NavigationView {
                 VStack {
-                    Stepper("What range you want to practice?", value: $gameRange, in: 2...12)
-                    Text("\(gameRange)")
-                    Stepper("How many questions?", value: $questionsAmount, in: 5...20, step: 5)
-                    Text("\(questionsAmount)")
-
-                    TextField("Answer", value: $answer, format: .number)
-                        .keyboardType(.decimalPad)
-                        .focused($isFocused)
-                    
-                    Section{
-                        if questions.count > 1 {
-                            Text(questions[questionNumber].textOfQ)
+                    Text("Enter your name below:")
+                        .font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/)
+                        .opacity(1)
+                    TextField("name...", text: $name)
+                        .onSubmit {
+                            validateName()
                         }
+                        .padding()
+                    NavigationLink(destination: GameView(name: name, questions: questions)) {
+                        Text("Start Game")
+                            .font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/)
+                    }.simultaneousGesture(TapGesture().onEnded{startGame()})
+                        .disabled(navActive)
+                    
+                    
+                    VStack {
+                        Stepper("What range you want to practice?", value: $gameRange, in: 2...12)
+                        Text("\(gameRange)")
+                        Stepper("How many questions?", value: $questionsAmount, in: 5...20, step: 5)
+                        Text("\(questionsAmount)")
                     }
+                    .padding()
+                }
+                
+                .alert(errorTitle, isPresented: $showingError) {
+                    Button("OK") {}
+                } message: {
+                    Text(errorMessage)
+                }
+                .onAppear {
+                    gameRange = 2
+                    questionsAmount = 5
+                    score = 0
+                    name = ""
+                    questions.removeAll()
                 }
             }
+            .frame(width: 400, height: 400)
+            .opacity(0.5)
+            .background(LinearGradient(colors: [.yellow, .red], startPoint: .topLeading, endPoint: .bottomTrailing))
+     //       .opacity(0.5)
         }
-        .padding()
     }
-
+        
+    func validateName() {
+        let myname = name
+        guard nameLongEnough(word: myname) else {
+            nameError(title: "Plese, enter your name", message: "Or at least initials")
+            return
+        }
+    }
     func startGame() {
-        for _ in 0..<questionsAmount {
+
+        for _ in 0..<questionsAmount + 1 {
             pushEm()
         }
-        score = 0
     }
     
     func pushEm() {
@@ -83,9 +112,21 @@ struct ContentView: View {
         questionNumber += 1
     }
     
-    func endGame () {
-        // wywołać alerta z końcowym wynikiem i powrotem do poprzedniego widoku
+    func nameError(title: String, message: String) {
+        errorTitle = title
+        errorMessage = message
+        showingError = true
+
     }
+    
+    func nameLongEnough(word: String) -> Bool {
+        if word.count == 0 {
+            return false
+        }
+        navActive = false
+        return true
+    }
+    
 }
 
 #Preview {
