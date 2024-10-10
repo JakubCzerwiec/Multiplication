@@ -17,6 +17,7 @@ struct GameView: View {
     @State private var questionNumber = 0
     @State private var answer = Int()
     var prompts = ["What about this one,", "Try this one,", "This one should be easy,", "Another chellange for you,", "Tackle that,"]
+    @State var promptNum = 0
     @FocusState private var amountIsFocused: Bool
     
     @State private var endingGame = false
@@ -28,79 +29,67 @@ struct GameView: View {
     var questions = [Multiplication.ContentView.Question(textOfQ: "TEEEEEST", answer: 1)]
     
     var body: some View {
-        Text("")
-        // Custom back button
-            .navigationBarBackButtonHidden(true)
-            .toolbar(content: {
-                ToolbarItem (placement: .navigationBarLeading)  {
-                    
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }, label: {
-                        Image(systemName: "arrowshape.turn.up.left.2.fill")
-                            .foregroundColor(.blue)
-                    })
-                }
-            })
-        // Custom back button
-        ZStack {
-            LinearGradient(colors: [.yellow, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
-
-            NavigationView {
-                VStack{
-                    if gameNotEnded {
-                        Section{
-                            Text("\(prompts[.random(in: 0..<prompts.count)]) \(name):")
-                            if questions.count > 0 {
-                                Text(questions[questionNumber].textOfQ)
-                            }
-                        }
+        VStack {
+            VStack {
+                if gameNotEnded {
+                    VStack {
                         Form {
-                            Section {
-                                TextField("Answer", value: $answer, format: .number)
-                                    .keyboardType(.numberPad)
-                                    .focused($amountIsFocused)
-                            }
-                        }
-                        .frame(height: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/)
-                        
-                        Button("Submit") {
-                            submit()
-                            answer = Int()
-                            isOver()
-                        }
-                        .frame(width: 150, height: 50)
-                        .background(.blue)
-                        .font(.title)
-                        .foregroundColor(.white)
-                        .clipped()
-                        .clipShape(.rect(cornerRadius: 20))
-                        .padding()
-                        .toolbar {
-                            if amountIsFocused {
-                                Button("Done") {
-                                    amountIsFocused = false
+                            Section{
+                                if questions.count > 0 {
+                                    Text("\(prompts[promptNum]) \(name):")
+                                    Text(questions[questionNumber].textOfQ)
                                 }
                             }
+                            TextField("Answer", value: $answer, format: .number)
+                                .keyboardType(.numberPad)
+                                .focused($amountIsFocused)
                         }
+                        .frame(height: 280)
+                        Section {
+                            Button("Submit") {
+                                submit()
+                                answer = Int()
+                                isOver()
+                            }
+                            .frame(width: 150, height: 50)
+                            .background(.blue)
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .clipped()
+                            .clipShape(.rect(cornerRadius: 20))
+                            .padding()
+                        }
+                        Spacer()
                     }
-                    VStack {
-                        if gameEnded {
-                            Button("Play Again") {
-                                presentationMode.wrappedValue.dismiss()
+                    .toolbar {
+                        if amountIsFocused {
+                            Button("Done") {
+                                amountIsFocused = false
                             }
                         }
                     }
                 }
+                if gameEnded {
+                    Button("Play Again") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .frame(width: 200, height: 50)
+                    .background(LinearGradient(colors: [.green, .yellow], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .clipped()
+                    .clipShape(.rect(cornerRadius: 20))
 
-                .alert(scoreTitle, isPresented: $endingGame) {
-                    Button("Got it!") {}
-                } message: {
-                    Text("\(name), Your final score is: \(score)")
                 }
             }
+            .alert(scoreTitle, isPresented: $endingGame) {
+                Button("Got it!") {}
+            } message: {
+                Text("\(name), Your final score is: \(score)")
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .init(horizontal: .center, vertical: .center))
+        // this two below changes background for the Form
+        .background(LinearGradient(colors: [.yellow, .red], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .scrollContentBackground(.hidden)
     }
     
     func submit() {
@@ -111,6 +100,7 @@ struct GameView: View {
         print(answer)
         print("Score = \(score)")
         questionNumber += 1
+        promptNum = .random(in: 0..<prompts.count)
     }
     
     func isOver() {
